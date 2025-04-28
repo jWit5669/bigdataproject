@@ -1,0 +1,3 @@
+mongo:
+  ATLAS_URI: mongodb+srv://mrjonwit:7Kg262xHrT8LLah@cluster0.mrd1syq.mongodb.net/
+  DB_NAME: bigDataProject
