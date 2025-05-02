@@ -3,34 +3,52 @@ from manage_db import return_collection, connect_to_database, populate_database,
 from datetime import datetime, date, time
 import json
 
-def add_geopoint( collection ):
+def add_geopoint( find_collection, change_collection=None ):
     """
         Simple method here: Some documents have a field called location, which contains
         a point for longitude and a point for latitude. I want to use those
-        to make a single geopoint that can be plotted on a map in Atlas
+        to make a single geopoint that can be plotted on a map in Atlas. There's an optional
+        field if you want to have the changes be made in a new collection
+        instead of the original one for some reason
     """
 
-    for document in collection.find( {"location" : {"$exists": True}}):
+    for document in find_collection.find( {"location" : {"$exists": True}}):
         try:
             latitude = float( document.get( "latitude" ) )
             longitude = float( document.get( "longitude" ) )
-            collection.update_one(
-                {"_id" : document["_id"]},
-                {
-                    "$set" : {"geopoint" : {"type" : "Point", "coordinates" : [longitude, latitude]}},
-                    "$unset" : {"location": ""}
+
+            if change_collection:
+
+                new_document = document.copy()
+                new_document["geopoint"] = {
+                    "type": "Point",
+                    "coordinates": [longitude, latitude]
                 }
-            )
+                new_document.pop( "location", None )
+                change_collection.insert_one( updated_doc )
+
+            else:
+
+                collection.update_one(
+                    {"_id" : document["_id"]},
+                    {
+                        "$set" : {"geopoint" : {"type" : "Point", "coordinates" : [longitude, latitude]}},
+                        "$unset" : {"location": ""}
+                    }
+                )
+
         except ( TypeError, ValueError ):
             print( f"Skipping document with _id: {document['_id']} due to invalid lat/lon." )
 
 
-def clean_datetimes( collection ):
+def clean_datetimes( find_collection, change_collection=None ):
     """
         All of the date and time information is in the form of 2 fields: date and time
-        These can be combined into one field with date and time in it
+        These can be combined into one field with date and time in it. There's an optional
+        field if you want to have the changes be made in a new collection
+        instead of the original one for some reason
     """
-    for document in collection.find( {"crash_time" : {"$exists": True}} ):
+    for document in find_collection.find( {"crash_time" : {"$exists": True}} ):
         try:
             
             crash_date = document.get( "crash_date" )
@@ -42,13 +60,22 @@ def clean_datetimes( collection ):
                 crash_date_time = datetime.strptime( crash_time.strip(), "%H:%M" ).time()
                 combined_datetime = datetime.combine( crash_date_date, crash_date_time )
 
-                collection.update_one(
-                {"_id" : document["_id"]},
-                {
-                    "$set" : {"crash_date" : combined_datetime},
-                    "$unset" : {"crash_time" : ""}
-                }
-            )
+                if change_collection:
+
+                    new_document = document.copy()
+                    new_document["crash_date"] = { "crash_date" : combined_datetime }
+
+                    change_collection.insert_one( updated_doc )
+                
+                else:
+
+                    collection.update_one(
+                        {"_id" : document["_id"]},
+                        {
+                            "$set" : {"crash_date" : combined_datetime},
+                            "$unset" : {"crash_time" : ""}
+                        }
+                    )
                 
         except Exception as e:
             print( f"Error processing document {document['_id']}: {e}" )
@@ -58,7 +85,8 @@ def clean_datetimes( collection ):
 def main():
     crashes = return_collection( connect_to_database(), "crashes" )
 
-    clean_datetimes( crashes )
+    clean_datetimes( crashes, cleaned_crashes )
+    clean_datetimes( crashes, cleaned_crashes )
 
 
 main()

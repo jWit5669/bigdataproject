@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 import yaml
-
+import certifi
 
 def load_config():
     """Load configuration from the YAML file.
@@ -21,5 +21,5 @@ def get_mongodb_connection():
     Returns:
         Connection: MongoDB connection object.
     """
-    client = MongoClient( config["mongo"]["ATLAS_URI"] )[ config["mongo"]["DB_NAME"] ]
+    client = MongoClient( config["mongo"]["ATLAS_URI"], tls=True, tlsCAFile=certifi.where() )[ config["mongo"]["DB_NAME"] ]
     return client
