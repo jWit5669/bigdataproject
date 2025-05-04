@@ -1,3 +1,3 @@
 mongo:
-  ATLAS_URI: mongodb+srv://mrjonwit:7Kg262xHrT8LLah@cluster0.mrd1syq.mongodb.net?retryWrites=true&w=majority"
-  DB_NAME: bigDataProjectg
+  ATLAS_URI: mongodb+srv://mrjonwit:7Kg262xHrT8LLah@cluster0.c0uclk9.mongodb.net/
+  DB_NAME: bigDataProject
