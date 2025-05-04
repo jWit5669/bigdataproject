@@ -2,7 +2,6 @@ from db_config import get_mongodb_connection
 from manage_db import return_collection, connect_to_database, populate_database, get_data, make_collection
 from datetime import datetime, date, time
 import json
-import hashlib
 
 def add_geopoint( find_collection, change_collection=None ):
     """
@@ -12,11 +11,15 @@ def add_geopoint( find_collection, change_collection=None ):
         field if you want to have the changes be made in a new collection
         instead of the original one for some reason
     """
+
+    #If a 2nd parameter is specified, we need to check ids there
     if change_collection is not None:
         unique_ids = set(doc["_id"] for doc in change_collection.find({}, {"_id": 1}))
 
     last_id = None
 
+    #I was having an issue with cursor timeout and my free tier of Atlas does not allow me
+    #to disable timeout, so I had to use batches of 1000
     while True:
         query = {"location": {"$exists": True}}
         if last_id:
@@ -27,6 +30,9 @@ def add_geopoint( find_collection, change_collection=None ):
         if not batch:
             break
 
+        #for every doc we look at, try to get lat and long. They won't all have it, so it's in a try
+        #If we want to chuck it into a new collection, copy the doc, make the geopoint, and toss it in.
+        #also remove the location field since that's redundant and not a geopoint object
         for document in batch:
             last_id = document["_id"]   
             try: 
@@ -46,6 +52,7 @@ def add_geopoint( find_collection, change_collection=None ):
                             unique_ids.add( new_document["_id"] )
                             change_collection.insert_one( new_document )
 
+                #if we are making the changes in the main collection, just update and set the new field and unset location
                 else:
 
                     find_collection.update_one(
@@ -67,11 +74,14 @@ def clean_datetimes( find_collection, change_collection=None ):
         field if you want to have the changes be made in a new collection
         instead of the original one for some reason
     """
+
+    #Same thing as geopoint for looking at ids in new collection if we specify
     if change_collection is not None:
         unique_ids = set(doc["_id"] for doc in change_collection.find({}, {"_id": 1}))
 
     last_id = None
 
+    #same thing as geopoint for having to do batches because Atlas and MongoDB hate their free developers
     while True:
         query = {"crash_date": {"$exists": True}}
         if last_id:
@@ -92,6 +102,8 @@ def clean_datetimes( find_collection, change_collection=None ):
 
                 if crash_date and crash_time:
                     
+                    #super cool of NYC to make the date of the crash and time different fields
+                    #even cooler that they're both strings even though crash_date is formatted to look like a datetime
                     crash_date_date = datetime.strptime(crash_date[:10].strip(), "%Y-%m-%d").date()
                     crash_date_time = datetime.strptime( crash_time.strip(), "%H:%M" ).time()
                     combined_datetime = datetime.combine( crash_date_date, crash_date_time )
@@ -122,27 +134,28 @@ def clean_datetimes( find_collection, change_collection=None ):
             except Exception as e:
                 print( f"Error processing document {document['_id']}: {e}" )
 
+
 def remove_duplicates(collection):
     """
     Note: Generative A.I. was used for this method because I was unsure about how to do it
+    The code provided was bad and overcomplicated, so I removed anything I felt was unnecessary
 
 
     Removes duplicate documents from a MongoDB collection by comparing the
     contents of each document (excluding '_id'). Keeps the first occurrence
     and removes all others.
     """
-    seen_hashes = set()
+    seen_ids = set()
     duplicates = []
 
     for doc in collection.find():
-        doc_copy = {k: v for k, v in doc.items() if k != '_id'}  # Exclude _id
-        doc_str = json.dumps(doc_copy, sort_keys=True)           # Stable string
-        doc_hash = hashlib.md5(doc_str.encode()).hexdigest()     # Hash document
+        
+        doc_id = document.get( "_id" )
 
-        if doc_hash in seen_hashes:
-            duplicates.append(doc['_id'])  # Mark duplicate for deletion
+        if doc_id in seen_ids:
+            duplicates.append(doc['_id'])
         else:
-            seen_hashes.add(doc_hash)
+            seen_ids.add(doc_id)
 
     if duplicates:
         result = collection.delete_many({'_id': {'$in': duplicates}})
