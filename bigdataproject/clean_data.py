@@ -137,8 +137,11 @@ def clean_datetimes( find_collection, change_collection=None ):
 
 def remove_duplicates(collection):
     """
-    Note: Generative A.I. was used for this method because I was unsure about how to do it
-    The code provided was bad and overcomplicated, so I removed anything I felt was unnecessary
+    Note: Generative A.I. was used for this method because I was unsure about how to do it at first
+    The code provided was bad and overcomplicated, so I removed anything I felt was unnecessary and spiffied it up.
+    ChatGPT wanted to use hashlib, which didn't make sense and just overcomplicated things. I just needed to know how to get the _id, which ended up just being document.get( "_id" )
+    Also I ended up not even using this in my cleaning because I just handled duplicates in the 
+    populate_database method
 
 
     Removes duplicate documents from a MongoDB collection by comparing the
@@ -153,15 +156,15 @@ def remove_duplicates(collection):
         doc_id = document.get( "_id" )
 
         if doc_id in seen_ids:
-            duplicates.append(doc['_id'])
+            duplicates.append( doc['_id'] )
         else:
-            seen_ids.add(doc_id)
+            seen_ids.add( doc_id )
 
     if duplicates:
-        result = collection.delete_many({'_id': {'$in': duplicates}})
-        print(f"Removed {result.deleted_count} duplicate documents.")
+        result = collection.delete_many( {'_id': {'$in': duplicates}} )
+        print( f"Removed {result.deleted_count} duplicate documents." )
     else:
-        print("No duplicates found.")
+        print( "No duplicates found." )
 
 def main():
     

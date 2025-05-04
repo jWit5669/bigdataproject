@@ -16,6 +16,7 @@ def make_heatmap( collection, coord_level=3, time=False ):
         I did use external sources for help. Can be found here:
             https://medium.com/@vinodvidhole/interesting-heatmaps-using-python-folium-ee41b118a996
         Did not know how to extract a count of _id for each lat/long, so I iterated through all docs 
+        Does not work with time heatmap, but that's not my problem right now. I am just using a regular one
     """
     
     documents = collection.find(
@@ -32,14 +33,14 @@ def make_heatmap( collection, coord_level=3, time=False ):
         latitude = round( float( document["latitude"] ), coord_level )
         longitude = round( float( document["longitude"] ), coord_level )
         
-
+        #we only care about dates if the time heatmap option is selected
         if time:
             date = datetime.date()
             heatmap_density[( latitude, longitude, date )] += 1
         else:
             heatmap_density[( latitude, longitude )] += 1
 
-    
+    #according to the tutorial, I need a list of all the times, hence the time_index, which is at a date level
     if time:
         heatmap_data = [[latitude, longitude, date, count] for ( latitude, longitude, date ), count in heatmap_density.items()]
         time_index = [entry["date"] for entry in heatmap_data if "date" in entry]
