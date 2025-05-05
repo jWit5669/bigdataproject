@@ -1,16 +1,12 @@
 from db_config import get_mongodb_connection
 from manage_db import return_collection, connect_to_database, populate_database, get_data, make_collection
-from datetime import datetime, date, time
-import json
-import matplotlib as plt
-import seaborn as sn
+import datetime
 import folium
 from folium.plugins import HeatMap
 from collections import defaultdict
 
 
-
-def make_heatmap( collection, coord_level=3, time=False ):
+def make_heatmap( collection_name, coord_level=3, time=False ):
     """
         Making a heatmap for the density of _ids by long/lat in the data
         I did use external sources for help. Can be found here:
@@ -19,7 +15,7 @@ def make_heatmap( collection, coord_level=3, time=False ):
         Does not work with time heatmap, but that's not my problem right now. I am just using a regular one
     """
     
-    documents = collection.find(
+    documents = collection_name.find(
         {
             "latitude": {"$exists": True},
             "longitude": {"$exists": True}
@@ -70,9 +66,11 @@ def main():
     
     
     database = connect_to_database()
-    cleaned_crashes = return_collection( database, "cleaned_crashes" )
+    collection = return_collection( database, "cleaned_crashes" )
 
-    make_heatmap( cleaned_crashes, 6, False )
+    #make_heatmap( cleaned_crashes, 6, False )
+
+
 
 
 main()
