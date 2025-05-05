@@ -1,0 +1,29 @@
+Row/Column Count
+{
+  row_count: [
+    {
+      $count: "total_rows",
+    },
+  ],
+  column_names: [
+    {
+      $project: {
+        fields: {
+          $objectToArray: "$$ROOT",
+        },
+      },
+    },
+    {
+      $unwind: "$fields",
+    },
+    {
+      $group: {
+        _id: "$fields.k",
+      },
+    },
+    {
+      $count: "total_columns",
+    },
+  ],
+}
+

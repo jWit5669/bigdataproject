@@ -1,0 +1,9 @@
+{
+    "$cond": {
+        "if": { "$eq": ["$number_of_persons_injured", 0] }, 
+            "then": null,
+        "else": {
+            "$divide": ["$number_of_persons_killed", "$number_of_persons_injured"]
+          }
+    }
+}

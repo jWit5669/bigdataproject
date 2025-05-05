@@ -1,0 +1,14 @@
+{
+  "$cond": {
+      "if": { "$and": [{ "$gte": [{ "$hour": "$crash_date" }, 4] }, { "$lt": [{ "$hour": "$crash_date" }, 12] }] },
+        "then": "Morning",
+      "else": {
+          "$cond": {
+              "if": { "$and": [{ "$gte": [{ "$hour": "$crash_date" }, 12] }, { "$lt": [{ "$hour": "$crash_date" }, 17] }] },
+                "then": "Afternoon",
+              "else": "Evening/Night"
+            }
+        }
+    }
+}
+  
